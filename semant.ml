@@ -104,6 +104,7 @@ let check (globals, functions) =
     (* Return the type of an expression or throw an exception *)
     let rec expr = function
 	      IntLit _ -> Int
+      | FloatLit _ -> Float
       | BoolLit _ -> Bool
       | StringLit _ -> String
       | Id s -> type_of_identifier s

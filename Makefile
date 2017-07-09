@@ -4,18 +4,18 @@
 
 # Easiest way to build: using ocamlbuild, which in turn uses ocamlfind
 
-all : microc.native printbig.o strconcat.o
+all : yeezygraph.native printbig.o strconcat.o
 
-microc.native :
+yeezygraph.native :
 	ocamlbuild -use-ocamlfind -pkgs llvm,llvm.analysis -cflags -w,+a-4 \
-		microc.native
+		yeezygraph.native
 
 # "make clean" removes all generated files
 
 .PHONY : clean
 clean :
 	ocamlbuild -clean
-	rm -rf testall.log *.diff microc scanner.ml parser.ml parser.mli
+	rm -rf testall.log *.diff yeezygraph scanner.ml parser.ml parser.mli
 	rm -rf printbig
 	rm -rf strconcat
 	rm -rf *.cmx *.cmi *.cmo *.cmx *.o *.s *.ll *.out *.exe
@@ -23,7 +23,7 @@ clean :
 
 # More detailed: build using ocamlc/ocamlopt + ocamlfind to locate LLVM
 
-OBJS = ast.cmx codegen.cmx parser.cmx scanner.cmx semant.cmx microc.cmx
+OBJS = ast.cmx codegen.cmx parser.cmx scanner.cmx semant.cmx yeezygraph.cmx
 
 microc : $(OBJS)
 	ocamlfind ocamlopt -linkpkg -package llvm -package llvm.analysis $(OBJS) -o microc
@@ -56,8 +56,8 @@ ast.cmo :
 ast.cmx :
 codegen.cmo : ast.cmo
 codegen.cmx : ast.cmx
-microc.cmo : semant.cmo scanner.cmo parser.cmi codegen.cmo ast.cmo
-microc.cmx : semant.cmx scanner.cmx parser.cmx codegen.cmx ast.cmx
+yeezygraph.cmo : semant.cmo scanner.cmo parser.cmi codegen.cmo ast.cmo
+yeezygraph.cmx : semant.cmx scanner.cmx parser.cmx codegen.cmx ast.cmx
 parser.cmo : ast.cmo parser.cmi
 parser.cmx : ast.cmx parser.cmi
 scanner.cmo : parser.cmi
@@ -85,7 +85,7 @@ TARFILES = ast.ml codegen.ml Makefile microc.ml parser.mly README scanner.mll \
 	semant.ml testall.sh $(TESTFILES:%=tests/%) printbig.c arcade-font.pbm \
 	font2c strconcat.c
 
-microc-llvm.tar.gz : $(TARFILES)
-	cd .. && tar czf microc-llvm/microc-llvm.tar.gz \
-		$(TARFILES:%=microc-llvm/%)
+yeezygraph-llvm.tar.gz : $(TARFILES)
+	cd .. && tar czf yeezygraph-llvm/yeezygraph-llvm.tar.gz \
+		$(TARFILES:%=yeezygraph-llvm/%)
 
