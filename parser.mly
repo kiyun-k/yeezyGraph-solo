@@ -2,6 +2,9 @@
 
 %{
 open Ast
+let get1of3 = (a, _, _) = a;
+let get2of3 = (_, a, _) = a;
+let get3of3 = (_, _, a) = a;
 %}
 
 /* Punctuation tokens */
@@ -63,8 +66,9 @@ program:
 
 decls:
    /* nothing */ { [], [] }
- | decls vdecl { ($2 :: fst $1), snd $1 }
- | decls fdecl { fst $1, ($2 :: snd $1) }
+ | decls vdecl { ($2 :: get1of3($1)), get2of3($1), get3of3($1) }
+ | decls fdecl { get1of3($1), ($2 :: get2of3($1)), get3of3($1) }
+ | decls structdecl { get1of3($1), get2of3($1), ($2 :: get3of3($1)) }
 
 fdecl:
    typ ID LPAREN formals_opt RPAREN LBRACE vdecl_list stmt_list RBRACE
