@@ -38,10 +38,35 @@ let check (globals, functions) =
    
   report_duplicate (fun n -> "duplicate global " ^ n) (List.map snd globals);
 
+  (**** Checking Structs ****)
+  report_duplicate (fun n -> "duplicate struct type " ^ n)
+    (List.map (fun sd -> sd.sname) structs);
+
   (**** Checking Functions ****)
 
   if List.mem "print" (List.map (fun fd -> fd.fname) functions)
   then raise (Failure ("function print may not be defined")) else ();
+
+  if List.mem "strconcat" (List.map (fun fd -> fd.fname) functions)
+  then raise (Failure ("function strconcat may not be defined")) else ();
+
+  if List.mem "node" (List.map (fun fd -> fd.fname) functions)
+  then raise (Failure ("function node may not be defined")) else ();
+
+  if List.mem "graph" (List.map (fun fd -> fd.fname) functions)
+  then raise (Failure ("function graph may not be defined")) else ();
+
+  if List.mem "queue" (List.map (fun fd -> fd.fname) functions)
+  then raise (Failure ("function queue may not be defined")) else ();
+
+  if List.mem "list" (List.map (fun fd -> fd.fname) functions)
+  then raise (Failure ("function list may not be defined")) else ();
+
+  if List.mem "map" (List.map (fun fd -> fd.fname) functions)
+  then raise (Failure ("function map may not be defined")) else ();
+
+  if List.mem "pqueue" (List.map (fun fd -> fd.fname) functions)
+  then raise (Failure ("function pqueue may not be defined")) else ();
 
   report_duplicate (fun n -> "duplicate function " ^ n)
     (List.map (fun fd -> fd.fname) functions);
@@ -51,19 +76,63 @@ let check (globals, functions) =
      { typ = Void; fname = "print"; formals = [(Int, "x")];
        locals = []; body = [] } 
 
-       (StringMap.add "printb"
-     { typ = Void; fname = "printb"; formals = [(Bool, "x")];
+      (StringMap.add "printint"
+      { typ = Void; fname = "printint"; formals = [(Int, "x")];
+
+       locals = []; body = [] } 
+       (StringMap.add "printfloat"
+     { typ = Void; fname = "printfloat"; formals = [(Float, "x")];
        locals = []; body = [] } 
 
-       (StringMap.add "prints"
+        (StringMap.add "prints"
      { typ = Void; fname = "prints"; formals = [(String, "x")];
        locals = []; body = [] } 
 
-       (StringMap.singleton "printbig"
-     { typ = Void; fname = "printbig"; formals = [(Int, "x")];
+       (StringMap.add "printstring"
+     { typ = Void; fname = "printstring"; formals = [(String, "x")];
+       locals = []; body = [] } 
+
+       (StringMap.singleton "strconcat"
+     { typ = String; fname = "strconcat"; formals = [(String, "x"); (String, "x")];
        locals = []; body = [] }
 
-     )))
+       (StringMap.singleton "printList"
+     { typ = Void; fname = "printList"; formals = [];
+       locals = []; body = [] }
+
+       (StringMap.singleton "initList"
+     { typ = Void; fname = "initList"; formals = [];
+       locals = []; body = [] }
+
+       (StringMap.singleton "getNode"
+     { typ = AnyType; fname = "getNode"; formals = [(Int, "x")];
+       locals = []; body = [] }
+
+       (StringMap.singleton "addNode"
+     { typ = Void; fname = "addNode"; formals = [(AnyType, "x")];
+       locals = []; body = [] }
+
+       (StringMap.singleton "removeNode"
+     { typ = void; fname = "removeNode"; formals = [(Int, "x")];
+       locals = []; body = [] }
+
+       (StringMap.singleton "appendNode"
+     { typ = Void; fname = "appendNode"; formals = [(AnyType, "x")];
+       locals = []; body = [] }
+
+       (StringMap.singleton "removeAll"
+     { typ = Void; fname = "removeAll"; formals = [];
+       locals = []; body = [] }
+
+       (StringMap.singleton "isEmpty"
+     { typ = Boolean; fname = "isEmpty"; formals = [];
+       locals = []; body = [] }
+
+       (StringMap.singleton "size"
+     { typ = Int; fname = "size"; formals = [];
+       locals = []; body = [] }
+
+     )))))))))))))))
    in
      
   let function_decls = List.fold_left (fun m fd -> StringMap.add fd.fname fd m)
@@ -75,6 +144,17 @@ let check (globals, functions) =
   in
 
   let _ = function_decl "main" in (* Ensure "main" is defined *)
+
+
+  let check_AccessStructField struct_name field_name = 
+    match struct_name with
+        StructType struct_type -> 
+          (let the_struct_type = try List.find (fun s -> s.sname = struct_type) structs 
+                                 with Not_found -> raise (Failure("struct type " ^ struct_type ^ " is undefined")) in
+          try fst( List.find (fun s -> snd(s) = field_name) the_struct_type.sformals) 
+          with Not_found -> raise (Failure("struct " ^ struct_type ^ " does not contain field " ^ field_name)))       
+      | _ -> raise (Failure(string_of_typ struct_name ^ " is not a struct type"))
+  in
 
   let check_function func =
 
@@ -101,6 +181,11 @@ let check (globals, functions) =
       with Not_found -> raise (Failure ("undeclared identifier " ^ s))
     in
 
+    let get_list_type = function
+      ListType(typ) -> typ
+      | _ -> String
+    in
+
     (* Return the type of an expression or throw an exception *)
     let rec expr = function
 	      IntLit _ -> Int
@@ -108,12 +193,16 @@ let check (globals, functions) =
       | BoolLit _ -> Bool
       | StringLit _ -> String
       | Id s -> type_of_identifier s
+      | List (t, _) -> ListType(t)
       | Binop(e1, op, e2) as e -> let t1 = expr e1 
                                   and t2 = expr e2 in
 	      (match op with
          Add | Sub | Mult | Div      when t1 = Int && t2 = Int -> Int
+       | Add | Sub | Mult | Div      when t1 = Float && t2 = Float -> Float
+       | Add                         when t1 = String && t2 = String -> String
 	     | Equal | Neq                 when t1 = t2 -> Bool
 	     | Less | Leq | Greater | Geq  when t1 = Int && t2 = Int -> Bool
+       | Less | Leq | Greater | Geq  when t1 = Float && t2 = Float -> Bool
 	     | And | Or                    when t1 = Bool && t2 = Bool -> Bool
        | _ -> raise (Failure ("illegal binary operator " ^
               string_of_typ t1 ^ " " ^ string_of_op op ^ " " ^

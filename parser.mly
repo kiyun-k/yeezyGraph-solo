@@ -5,17 +5,31 @@ open Ast
 %}
 
 /* Punctuation tokens */
-%token SEMI LPAREN RPAREN LBRACE RBRACE COMMA
+%token SEMI LPAREN RPAREN LBRACE RBRACE LBRACKET RBRACKET COMMA
+
 /* Arithmetic tokens */
 %token PLUS MINUS TIMES DIVIDE ASSIGN NOT
+
 /* Logical tokens */
 %token EQ NEQ LT LEQ GT GEQ TRUE FALSE AND OR
+
 /* Primitive datatype tokens */
-%token INT BOOL STRING
+%token INT BOOL STRING FLOAT
+
+/* Struct tokens */
+%token STRUCT
+
+/* Collections tokens */
+%token LIST QUEUE PQUEUE
+
+/* Graph tokens */
+%token GRAPH NODE
+
 /* Control flow tokens */
-%token IF ELSE FOR WHILE
+%token IF ELSE FOR WHILE 
+
 /* Function tokens */
-%token RETURN VOID 
+%token RETURN VOID NEW DOT
 
 %token <int> INT_LITERAL
 %token <string> STR_LITERAL
@@ -25,14 +39,19 @@ open Ast
 
 %nonassoc NOELSE
 %nonassoc ELSE
+%nonassoc LBRACKET RBRACKET
+
 %right ASSIGN
+%right NOT NEG
+
 %left OR
 %left AND
 %left EQ NEQ
 %left LT GT LEQ GEQ
 %left PLUS MINUS
 %left TIMES DIVIDE
-%right NOT NEG
+%left DOT
+
 
 %start program
 %type <Ast.program> program
@@ -68,6 +87,13 @@ typ:
   | BOOL { Bool } 
   | STRING { String }
   | VOID { Void }
+  | STRUCT ID { StructType ($2) } 
+  | GRAPH LT typ GT { GraphType($3)}
+  | NODE LT typ GT { NodeType($3) }
+  | QUEUE LT typ GT {QueueType($3)}
+  | PQUEUE { PQueueType }
+  | LIST LT typ GT { ListType($3) }
+ 
 
 vdecl_list:
     /* nothing */    { [] }
@@ -75,6 +101,13 @@ vdecl_list:
 
 vdecl:
    typ ID SEMI { ($1, $2) }
+
+structdecl:
+  STRUCT ID LBRACE vdecl_list RBRACE 
+    {{ 
+        sname = $2;
+        sformals = $4;
+    }}
 
 stmt_list:
     /* nothing */  { [] }
@@ -118,6 +151,12 @@ expr:
   | ID ASSIGN expr   { Assign($1, $3) }
   | ID LPAREN actuals_opt RPAREN { Call($1, $3) }
   | LPAREN expr RPAREN { $2 }
+  | NEW QUEUE LT typ GT LPAREN actuals_opt RPAREN { Queue($4, $7) }
+  | NEW PQUEUE LPAREN actuals_opt RPAREN { PQueue($4) }
+  | NEW LIST LT typ GT LPAREN actuals_opt RPAREN { List($4,$7) }
+  | NEW GRAPH LT typ GT LPAREN RPAREN { Graph($4) }
+  | NEW NODE LT typ GT LPAREN ID RPAREN {Node($7, $4)}
+
 
 actuals_opt:
     /* nothing */ { [] }

@@ -19,11 +19,16 @@ module StringMap = Map.Make(String)
 
 let translate (globals, functions) =
   let context = L.global_context () in (* global data container *)
-  let the_module = L.create_module context "MicroC" (* container *)
+  let llctx = L.global_context () in
+  let the_module = L.create_module context "YeezyGraph" (* container *)
+  let llmb = L.MemoryBuffer.of_file "linkedlist.bc" in
+  let llm = Llvm_bitreader.parse_bitcode llctx llmb in
   and i32_t  = L.i32_type  context
   and i8_t   = L.i8_type   context (* for printf format string *)
   and float_t  = L.double_type context
   and i1_t   = L.i1_type   context
+  and list_t = L.pointer_type (match L.type_by_name llm "struct.List" with 
+    None -> raise (Invalid_argument "Option.get" "struct.List") | Some x -> x)
   and void_t = L.void_type context in
 
  let ltype_of_typ = function (* LLVM type for a given AST type *)
@@ -31,7 +36,15 @@ let translate (globals, functions) =
     | A.Float -> float_t
     | A.Bool -> i1_t
     | A.String -> L.pointer_type i8_t
+    | A.ListType -> list_t
+    | A.AnyType -> L.pointer_type i8_t
     | A.Void -> void_t in
+
+  let struct_types = 
+    let add_struct m structdecl = 
+      let struct_t = L.named_struct_type context structdecl.A.sname 
+      in StringMap.add structdecl.A.sname struct_t m in
+    List.fold_left add_struct StringMap.empty structs in
 
   (* Declare and initialize each global variable; remember its value in a map *)
   let global_vars =
@@ -45,7 +58,7 @@ let translate (globals, functions) =
   let printf_func = L.declare_function "printf" printf_t the_module in
 
   (* Declare built-in strcat() function *) 
-  let strconcat_t = L.function_type (L.pointer_type i8_t) [| L.pointer_type i8_t; L.pointer_type i8_t |] in
+  let strconcat_t = L.var_arg_function_type (L.pointer_type i8_t) [| L.pointer_type i8_t; L.pointer_type i8_t |] in
   let strconcat_func = L.declare_function "strconcat" strconcat_t the_module in
 
   (* Define each user-defined function (arguments and return type); remember in a map *)
@@ -65,9 +78,13 @@ let translate (globals, functions) =
     let builder = L.builder_at_end context (L.entry_block the_function) in
 
     
-    let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in 
-    let float_format_str = L.build_global_stringptr "%f\n" "fmt" builder in
-    let str_format_str = L.build_global_stringptr "%s\n" "fmt" builder in
+    let int_format = L.build_global_stringptr "%d\n" "fmt" builder in 
+    let float_format = L.build_global_stringptr "%f\n" "fmt" builder in
+    let str_format = L.build_global_stringptr "%s\n" "fmt" builder in
+
+    let int_format2 = L.build_global_stringptr "%d" "fmt" builder in 
+    let str_format2 = L.build_global_stringptr "%s" "fmt" builder in
+    let float_format2 = L.build_global_stringptr "%f" "fmt" builder in
 
     
     (* Construct the function's "locals": formal arguments and locally
@@ -105,38 +122,41 @@ let translate (globals, functions) =
          and e2' = expr builder e2 
          in
          let t1 = L.type_of e1' in 
-	       (match op with
-	         A.Add     -> if t1 = float_t then L.build_fadd e1' e2' "fadd" builder 
-                        else if t1 = i32_t then L.build_add e1' e2' "add" builder
-                        else (L.build_call strconcat_func [| e1' ; e2'|] "strconcat" builder) 
-	       | A.Sub     -> if t1 = float_t then L.build_fsub e1' e2' "fsub" builder 
-                        else L.build_sub e1' e2' "sub" builder
-         | A.Mult    -> if t1 = float_t then L.build_fmul e1' e2' "fmult" builder 
-                        else L.build_mul e1' e2' "mult" builder
-         | A.Div     -> if t1 = float_t then L.build_fdiv e1' e2' "fdiv" builder 
-                        else L.build_sdiv e1' e2' "div" builder
-	       | A.And     -> L.build_and e1' e2' "and" builder
-	       | A.Or      -> L.build_or e1' e2' "or" builder
-	       | A.Equal   -> L.build_icmp L.Icmp.Eq e1' e2' "tmp" builder
-	       | A.Neq     -> L.build_icmp L.Icmp.Ne e1' e2' "tmp" builder
-	       | A.Less    -> L.build_icmp L.Icmp.Slt e1' e2' "tmp" builder
-	       | A.Leq     -> L.build_icmp L.Icmp.Sle e1' e2' "tmp" builder
-	       | A.Greater -> L.build_icmp L.Icmp.Sgt e1' e2' "tmp" builder
-	       | A.Geq     -> L.build_icmp L.Icmp.Sge e1' e2' "tmp" builder
-	       ) 
+	       ( match op with
+	         A.Add     -> if t1 = float_t && t2 = float_t then L.build_fadd 
+                        else if t1 = i32_t && t2 = i32_t then L.build_add
+                        else if t1 = L.pointer_type i8_t then 
+	        | A.Sub     -> if t1 = float_t then L.build_fsub  
+                        else if t1 = i32_t then L.build_sub 
+          | A.Mult    -> if t1 = float_t then L.build_fmul 
+                        else if t1 = i32_t then L.build_mul
+          | A.Div     -> if t1 = float_t then L.build_fdiv 
+                        else if t1 = i32_t then L.build_sdiv
+	        | A.And     -> L.build_and 
+	        | A.Or      -> L.build_or 
+	        |  A.Equal   -> if t1 = float_t then L.build_fcmp L.Fcmp.Oeq else L.build_icmp L.Icmp.Eq
+          | A.Neq     -> if t1 = float_t then L.build_fcmp L.Fcmp.One else L.build_icmp L.Icmp.Ne
+          | A.Less    -> if t1 = float_t then L.build_fcmp L.Fcmp.Olt else L.build_icmp L.Icmp.Slt
+          | A.Leq     -> if t1 = float_t then L.build_fcmp L.Fcmp.Ole else L.build_icmp L.Icmp.Sle
+          | A.Greater -> if t1 = float_t then L.build_fcmp L.Fcmp.Ogt else L.build_icmp L.Icmp.Sgt
+          | A.Geq     -> if t1 = float_t then L.build_fcmp L.Fcmp.Oge else L.build_icmp L.Icmp.Sge
+	       ) e1' e2' "tmp" builder
       | A.Unop(op, e) ->
 	       let e' = expr builder e in
-	       (match op with
+	       ( match op with
 	         A.Neg     -> L.build_neg
-         | A.Not     -> L.build_not) e' "tmp" builder
+          | A.Not     -> L.build_not
+        ) e' "tmp" builder
       | A.Assign (s, e) -> let e' = expr builder e in
 	                   ignore (L.build_store e' (lookup s) builder); e'
       | A.Call ("print", [e]) ->
-	       L.build_call printf_func [| int_format_str ; (expr builder e) |] "printf" builder
-      | A.Call ("printstring", [e]) -> 
-         L.build_call printf_func [| str_format_str; (expr builder e) |] "printf" builder
+	       L.build_call printf_func [| int_format ; (expr builder e) |] "printf" builder
       | A.Call ("printfloat", [e]) ->
-	       L.build_call printf_func [| float_format_str ; (expr builder e) |] "printf" builder
+	       L.build_call printf_func [| float_format ; (expr builder e) |] "printf" builder
+      | A.Call ("prints", [e]) -> L.build_call printf_func [| str_format; (expr builder e) |] "printf" builder
+      | A.Call("printint", [e]) -> L.build_call printf_func [| int_format2; (expr builder e) |] "printf" builder
+      | A.Call ("printstring", [e]) -> 
+         L.build_call printf_func [| str_format2; (expr builder e) |] "printf" builder
       | A.Call ("strconcat", [e1; e2]) ->
           L.build_call strconcat_func [|(expr builder e1); (expr builder e2)|] "strconcat" builder
       | A.Call (f, act) ->
@@ -146,6 +166,7 @@ let translate (globals, functions) =
 	       let result = (match fdecl.A.typ with A.Void -> ""
                                               | _ -> f ^ "_result") in
          L.build_call fdef (Array.of_list actuals) result builder
+      | A.ObjectCall
     in
 
     (* Invoke "f builder" if the current block doesn't already

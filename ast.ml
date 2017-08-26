@@ -6,7 +6,9 @@ type op = Add | Sub | Mult | Div |
 
 type uop = Neg | Not
 
-type typ = Int | Bool | Float | String | Void
+type typ = Int | Bool | Float | String | Void | StructType of string 
+| GraphType of typ | NodeType of typ | QueueType of typ |PQueueTyp of typ
+| ListType of typ | AnyType 
 
 type bind = typ * string
 
@@ -20,6 +22,8 @@ type expr =
   | Unop of uop * expr
   | Assign of string * expr
   | Call of string * expr list
+  | ObjectCall of expr * string * expr list
+  | List of typ * expr list
   | Noexpr
 
 type stmt =
@@ -38,7 +42,12 @@ type func_decl = {
     body : stmt list;
   }
 
-type program = bind list * func_decl list
+type struct_decl = {
+  sname : string;
+  sformals : bind list;
+}
+
+type program = bind list * func_decl list * struct_decl list
 
 (* Pretty-printing functions *)
 
@@ -74,6 +83,8 @@ let rec string_of_expr = function
   | Call(f, el) ->
       f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
   | Noexpr -> ""
+  | List (t, e1) -> 
+      "new " ^ "List<" ^ string_of_typ t ^ ">" ^ "(" ^ String.concat ", " (List.map string_of_expr e1) ^ ")"
 
 let rec string_of_stmt = function
     Block(stmts) ->
@@ -94,6 +105,8 @@ let string_of_typ = function
   | Bool -> "bool"
   | String -> "string"
   | Void -> "void"
+  | ListType(t) -> "list " ^ string_of_typ t
+  | AnyType -> "AnyType"
 
 let string_of_vdecl (t, id) = string_of_typ t ^ " " ^ id ^ ";\n"
 
@@ -105,6 +118,11 @@ let string_of_fdecl fdecl =
   String.concat "" (List.map string_of_stmt fdecl.body) ^
   "}\n"
 
+let string_of_structdecl structdecl = 
+  "struct " ^ structdecl.sname ^ " \n{\n" ^
+  String.concat "; " (List.map snd struct_decl.sformals) ^
+  "}\n"
+
 let string_of_program (vars, funcs) =
-  String.concat "" (List.map string_of_vdecl vars) ^ "\n" ^
+  String.concat "" (List.map string_of_vdecl vars) ^ "\n" 
   String.concat "\n" (List.map string_of_fdecl funcs)
