@@ -7,7 +7,7 @@
 all : yeezygraph.native printbig.o strconcat.o
 
 yeezygraph.native :
-	ocamlbuild -use-ocamlfind -pkgs llvm,llvm.analysis -cflags -w,+a-4 \
+	ocamlbuild -r -use-ocamlfind -pkgs llvm,llvm.analysis,llvm.bitreader,llvm.irreader,llvm.linker -cflags -w,+a-4 \
 		yeezygraph.native
 
 # "make clean" removes all generated files
