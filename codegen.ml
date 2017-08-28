@@ -19,10 +19,24 @@ module StringMap = Map.Make(String)
 
 let translate (globals, functions, structs) =
   let context = L.global_context () in (* global data container *)
-  let llctx = L.global_context () in
+  let listctx = L.global_context () in
+  let nodectx = L.global_context () in
+  let graphctx = L.global_context () in 
+  let queuectx = L.global_context () in
+  let pqueuectx = L.global_context () in
   let the_module = L.create_module context "YeezyGraph" in (* container *)
-  let llmb = L.MemoryBuffer.of_file "linkedlist.bc" in
-  let llm = Llvm_bitreader.parse_bitcode llctx llmb in
+
+  let listmb = L.MemoryBuffer.of_file "linkedlist.bc" in
+  let llm = Llvm_bitreader.parse_bitcode listctx listmb in
+  let nodemb = L.MemoryBuffer.of_file"node.bc" in
+  let nodem = Llvm_bitreader.parse_bitcode nodectx nodemb in
+  let graphmb = L.MemoryBuffer.of_file"graph.bc" in
+  let graphm = Llvm_bitreader.parse_bitcode graphctx graphmb in
+  let queuemb = L.MemoryBuffer.of_file"queue.bc" in
+  let queuem = Llvm_bitreader.parse_bitcode queuectx queuemb in
+  let pqueuemb = L.MemoryBuffer.of_file"pqueue.bc" in
+  let pqueuem = Llvm_bitreader.parse_bitcode pqueuectx pqueuemb in
+
   let i32_t = L.i32_type context
   and i8_t = L.i8_type context (* for printf format string *)
   and float_t = L.double_type context
@@ -30,6 +44,14 @@ let translate (globals, functions, structs) =
   and list_t = L.pointer_type (match L.type_by_name llm "struct.List" with 
     None -> raise (Invalid_argument "Option.get struct.List") 
    | Some x -> x)
+  and queue_t = L.pointer_type (match L.type_by_name queuem "struct.Queue" with
+    None -> raise (Invalid_argument "Option.get queue") | Some x -> x)
+  and pqueue_t = L.pointer_type (match L.type_by_name pqueuem "struct.pqueue" with
+    None -> raise (Invalid_argument "Option.get pqueue") | Some x -> x)
+  and graph_t = L.pointer_type (match L.type_by_name graphm "struct.graph" with
+    None -> raise (Invalid_argument "Option.get graph") | Some x -> x )
+  and node_t = L.pointer_type (match L.type_by_name nodem "struct.node" with
+    None -> raise (Invalid_argument "Option.get node") | Some x -> x )
   and void_t = L.void_type context in
 
   let struct_types = 
@@ -43,11 +65,11 @@ let translate (globals, functions, structs) =
     | A.Float -> float_t
     | A.Bool -> i1_t
     | A.String -> L.pointer_type i8_t
-    | A.ListType(_) -> list_t
-    (*| A.GraphType _ -> graph_t
+    | A.ListType _ -> list_t
+    | A.GraphType _ -> graph_t
     | A.NodeType _  -> node_t 
-    | A.QueueType _ -> queueid_t
-    | A.PQueueType _ -> pqueue_t *)
+    | A.QueueType _ -> queue_t
+    | A.PQueueType _ -> pqueue_t
     | A.StructType s -> (try StringMap.find s struct_types with Not_found -> raise (Failure("struct type " ^ s ^ " is undefined") ))
     | A.AnyType -> L.pointer_type i8_t
     | A.Void -> void_t in
@@ -173,8 +195,7 @@ let translate (globals, functions, structs) =
         ) e' "tmp" builder
       | A.Assign (s, e) -> let e' = expr builder e in
 	                   ignore (L.build_store e' (lookup s) builder); e'
-      | A.Call ("print", [e]) | A.Call ("printb", [e]) ->
-         L.build_call printf_func [| int_format_str ; (expr builder e) |] "printf" builder
+      | A.Call ("print", [e]) -> L.build_call printf_func [| int_format ; (expr builder e) |] "printf" builder
       | A.Call ("printfloat", [e]) ->
 	       L.build_call printf_func [| float_format ; (expr builder e) |] "printf" builder
       | A.Call ("prints", [e]) -> L.build_call printf_func [| str_format; (expr builder e) |] "printf" builder
