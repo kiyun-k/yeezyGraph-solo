@@ -37,20 +37,24 @@ void modify_visited(struct node *curr_node, bool val){
 }
 
 struct List *get_inNodes(struct node *curr_node) {
-	struct List *l = l_init();
+	struct List *l = initList();
 	for (int i = 0; i < curr_node->inNodes->size; i++) {
 		
 		char *key = m_key(curr_node->inNodes, i);
-		l_add(l, key);
+		struct ListNode *temp = malloc(sizeof(void *));
+		temp -> data = key;
+		l_add(l, temp);
 	}
 	return l;
 }
 
 struct List *get_outNodes(struct node *curr_node) {
-	struct List *l = l_init();
+	struct List *l = initList();
 	for (int i = 0; i < curr_node->outNodes->size; i++) {
 		char *key = m_key(curr_node->outNodes, i);
-		l_add(l, key);
+		struct ListNode *temp = malloc(sizeof(void *));
+		temp -> data = key;
+		l_add(l, temp);
 	}
 	return l;
 }

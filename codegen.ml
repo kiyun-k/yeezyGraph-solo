@@ -173,8 +173,8 @@ let translate (globals, functions, structs) =
         ) e' "tmp" builder
       | A.Assign (s, e) -> let e' = expr builder e in
 	                   ignore (L.build_store e' (lookup s) builder); e'
-      | A.Call ("print", [e]) ->
-	       L.build_call printf_func [| int_format ; (expr builder e) |] "printf" builder
+      | A.Call ("print", [e]) | A.Call ("printb", [e]) ->
+         L.build_call printf_func [| int_format_str ; (expr builder e) |] "printf" builder
       | A.Call ("printfloat", [e]) ->
 	       L.build_call printf_func [| float_format ; (expr builder e) |] "printf" builder
       | A.Call ("prints", [e]) -> L.build_call printf_func [| str_format; (expr builder e) |] "printf" builder

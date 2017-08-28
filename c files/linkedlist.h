@@ -15,18 +15,18 @@ struct List *initList();
 
 void printList(struct List *list);
 
-struct ListNode *getNode(struct List *list, int index);
+struct ListNode *l_get(struct List *list, int index);
 
-void addNode(struct List *list, int index, struct ListNode *node);
+void l_insert(struct List *list, int index, struct ListNode *node);
 
-void removeNode(struct List *list, int index);
+void l_remove(struct List *list, int index);
 
-void appendNode(struct List *list, struct ListNode *node);
+void l_add(struct List *list, struct ListNode *node);
 
 void removeAll(struct List *list);
 
-int isEmpty(struct List *list);
+int l_isEmpty(struct List *list);
 
-int size(struct List *list);
+int l_size(struct List *list);
 
 #endif

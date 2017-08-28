@@ -21,7 +21,7 @@ void printList(struct List *list){
 	printf("%s", "}");
 }
 
-struct ListNode *getNode(struct List *list, int index) {
+struct ListNode *l_get(struct List *list, int index) {
 	int i = 0;
 	struct ListNode *current = list -> head;
 	while(i < index) {
@@ -31,7 +31,7 @@ struct ListNode *getNode(struct List *list, int index) {
 	return current;
 }
 
-void addNode(struct List* list, int index, struct ListNode *node){
+void l_insert(struct List* list, int index, struct ListNode *node){
 	int count = 0;
 	struct ListNode *current = list -> head;
 	struct ListNode *next, *prev;
@@ -45,7 +45,7 @@ void addNode(struct List* list, int index, struct ListNode *node){
 
 }
 
-void removeNode(struct List *list, int index){
+void l_remove(struct List *list, int index){
 	int count = 0;
 	struct ListNode *current = list -> head;
 	struct ListNode *next, *prev;
@@ -59,15 +59,20 @@ void removeNode(struct List *list, int index){
 	next -> prev = prev;
 }
 
-void appendNode(struct List *list, struct ListNode *node){
+void l_add(struct List *list, struct ListNode *node){
 	struct ListNode *current = list -> head;
 	struct ListNode *prev;
 	while(current != NULL){
 		prev = current;
 		current = current -> next;
 	}
-
-	prev -> next = node;
+	if(prev){
+		prev -> next = node;
+	}
+	else {
+		list -> head = node;
+	}
+	
 }
 
 void removeAll(struct List *list){
@@ -80,11 +85,11 @@ void removeAll(struct List *list){
 	}
 }
 
-int isEmpty(struct List *list){
+int l_isEmpty(struct List *list){
 	return list -> head == NULL;
 }
 
-int size(struct List *list){
+int l_size(struct List *list){
 	int count = 0;
 	struct ListNode *current = list -> head;
 	while(current != NULL) {
