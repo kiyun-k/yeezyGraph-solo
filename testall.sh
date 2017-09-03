@@ -1,25 +1,18 @@
 #!/bin/sh
 
-# Regression testing script for MicroC
+# Regression testing script for yeezygraph
 # Step through a list of files
 #  Compile, run, and check the output of each expected-to-work test
 #  Compile and check the error of each expected-to-fail test
 
 # Path to the LLVM interpreter
- LLI="lli"
-#LLI="/usr/local/opt/llvm@3.7/bin/lli-3.7"
+LLI="lli"
+#LLI="/usr/local/opt/llvm/bin/lli"
 
-# Path to the LLVM compiler
- LLC="llc"
-#LLC="/usr/local/opt/llvm@3.7/bin/llc-3.7"
+ CC="clang"
 
-# Path to the C compiler
-CC="clang"
-
-# Path to the microc compiler.  Usually "./microc.native"
-# Try "_build/microc.native" if ocamlbuild was unable to create a symbolic link.
-YEEZYGRAPH="./yeezygraph.native"
-#MICROC="_build/microc.native"
+# Path to the yeezygraph compiler.
+yeezygraph="./yeezygraph.native"
 
 # Set time limit for all operations
 ulimit -t 30
@@ -40,8 +33,8 @@ Usage() {
 
 SignalError() {
     if [ $error -eq 0 ] ; then
-    echo "FAILED"
-    error=1
+	echo "FAILED"
+	error=1
     fi
     echo "  $1"
 }
@@ -52,8 +45,8 @@ Compare() {
     generatedfiles="$generatedfiles $3"
     echo diff -b $1 $2 ">" $3 1>&2
     diff -b "$1" "$2" > "$3" 2>&1 || {
-    SignalError "$1 differs"
-    echo "FAILED $1 differs from $2" 1>&2
+	SignalError "$1 differs"
+	echo "FAILED $1 differs from $2" 1>&2
     }
 }
 
@@ -62,8 +55,8 @@ Compare() {
 Run() {
     echo $* 1>&2
     eval $* || {
-    SignalError "$1 failed on $*"
-    return 1
+	SignalError "$1 failed on $*"
+	return 1
     }
 }
 
@@ -72,8 +65,8 @@ Run() {
 RunFail() {
     echo $* 1>&2
     eval $* && {
-    SignalError "failed: $* did not report an error"
-    return 1
+	SignalError "failed: $* did not report an error"
+	return 1
     }
     return 0
 }
@@ -92,24 +85,22 @@ Check() {
 
     generatedfiles=""
 
-    generatedfiles="$generatedfiles ${basename}.ll ${basename}.s ${basename}.exe ${basename}.out" &&
-    Run "$YEEZYGRAPH" "<" $1 ">" "${basename}.ll" &&
-    Run "$LLC" "${basename}.ll" ">" "${basename}.s" &&
-    Run "$CC" "-o" "${basename}.exe" "${basename}.s" "queue.bc" "pqueue.bc" "linkedlist.bc" "graph.bc" "node.bc" "map.bc"  &&
-    Run "./${basename}.exe" > "${basename}.out" &&
+    generatedfiles="$generatedfiles ${basename}.ll ${basename}.out" &&
+    Run "$yeezygraph" "<" $1 ">" "${basename}.ll" &&
+    Run "$LLI" "${basename}.ll" ">" "${basename}.out" &&
     Compare ${basename}.out ${reffile}.out ${basename}.diff
 
     # Report the status and clean up the generated files
 
     if [ $error -eq 0 ] ; then
-    if [ $keep -eq 0 ] ; then
-        rm -f $generatedfiles
-    fi
-    echo "OK"
-    echo "###### SUCCESS" 1>&2
+	if [ $keep -eq 0 ] ; then
+	    rm -f $generatedfiles
+	fi
+	echo "OK"
+	echo "###### SUCCESS" 1>&2
     else
-    echo "###### FAILED" 1>&2
-    globalerror=$error
+	echo "###### FAILED" 1>&2
+	globalerror=$error
     fi
 }
 
@@ -128,31 +119,31 @@ CheckFail() {
     generatedfiles=""
 
     generatedfiles="$generatedfiles ${basename}.err ${basename}.diff" &&
-    RunFail "$YEEZYGRAPH" "<" $1 "2>" "${basename}.err" ">>" $globallog &&
+    RunFail "$yeezygraph" "<" $1 "2>" "${basename}.err" ">>" $globallog &&
     Compare ${basename}.err ${reffile}.err ${basename}.diff
 
     # Report the status and clean up the generated files
 
     if [ $error -eq 0 ] ; then
-    if [ $keep -eq 0 ] ; then
-        rm -f $generatedfiles
-    fi
-    echo "OK"
-    echo "###### SUCCESS" 1>&2
+	if [ $keep -eq 0 ] ; then
+	    rm -f $generatedfiles
+	fi
+	echo "OK"
+	echo "###### SUCCESS" 1>&2
     else
-    echo "###### FAILED" 1>&2
-    globalerror=$error
+	echo "###### FAILED" 1>&2
+	globalerror=$error
     fi
 }
 
 while getopts kdpsh c; do
     case $c in
-    k) # Keep intermediate files
-        keep=1
-        ;;
-    h) # Help
-        Usage
-        ;;
+	k) # Keep intermediate files
+	    keep=1
+	    ;;
+	h) # Help
+	    Usage
+	    ;;
     esac
 done
 
@@ -166,12 +157,6 @@ LLIFail() {
 
 which "$LLI" >> $globallog || LLIFail
 
-if [ ! -f printbig.o ]
-then
-    echo "Could not find printbig.o"
-    echo "Try \"make printbig.o\""
-    exit 1
-fi
 
 if [ $# -ge 1 ]
 then
@@ -183,16 +168,16 @@ fi
 for file in $files
 do
     case $file in
-    *test-*)
-        Check $file 2>> $globallog
-        ;;
-    *fail-*)
-        CheckFail $file 2>> $globallog
-        ;;
-    *)
-        echo "unknown file type $file"
-        globalerror=1
-        ;;
+	*test-*)
+	    Check $file 2>> $globallog
+	    ;;
+	*fail-*)
+	    CheckFail $file 2>> $globallog
+	    ;;
+	*)
+	    echo "unknown file type $file"
+	    globalerror=1
+	    ;;
     esac
 done
 

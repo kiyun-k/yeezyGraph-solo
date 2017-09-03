@@ -1,14 +1,14 @@
 (* Abstract Syntax Tree and functions for printing it *)
 
-type op = Add | Sub | Mult | Div | 
+type op = Add | Sub | Mult | Div |
           Equal | Neq | Less | Leq | Greater | Geq |
           And | Or
 
 type uop = Neg | Not
 
-type typ = Int | Bool | Float | String | Void | StructType of string 
+type typ = Int | Bool | Float | String | Void | StructType of string
 | GraphType of typ | NodeType of typ | QueueType of typ |PQueueType of typ
-| ListType of typ | AnyType 
+| ListType of typ | AnyType
 
 type bind = typ * string
 
@@ -20,15 +20,16 @@ type expr =
   | Id of string
   | Binop of expr * op * expr
   | Unop of uop * expr
-  | Assign of string * expr
+  | Assign of expr * expr
   | Call of string * expr list
-  | ObjectCall of expr * string * expr list
   | List of typ * expr list
-  | Queue of typ * expr list 
-  | PQueue of typ * expr list 
+  | Queue of typ * expr list
+  | PQueue of typ * expr list
   | Graph of typ
   | Node of string * typ
   | Noexpr
+  | AccessStructField of expr * string
+  | ObjectCall of expr * string * expr list
 
 type stmt =
     Block of stmt list
@@ -61,7 +62,12 @@ let rec string_of_typ = function
   | Bool -> "bool"
   | String -> "string"
   | Void -> "void"
-  | ListType(t) -> "list<" ^ string_of_typ t ^ ">"
+  | StructType(s) -> s
+  | ListType(t) -> "List " ^ string_of_typ t
+  | QueueType(t) -> "Queue " ^ string_of_typ t
+  | PQueueType(t) -> "Pqueue " ^ string_of_typ t
+  | NodeType(t) -> "Node " ^ string_of_typ t
+  | GraphType(t) -> "Graph " ^ string_of_typ t
   | AnyType -> "AnyType"
 
 let string_of_op = function
@@ -92,12 +98,19 @@ let rec string_of_expr = function
   | Binop(e1, o, e2) ->
       string_of_expr e1 ^ " " ^ string_of_op o ^ " " ^ string_of_expr e2
   | Unop(o, e) -> string_of_uop o ^ string_of_expr e
-  | Assign(v, e) -> v ^ " = " ^ string_of_expr e
+  | Assign(v, e) -> string_of_expr v ^ " = " ^ string_of_expr e
   | Call(f, el) ->
       f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
   | Noexpr -> ""
-  | List (t, e1) -> 
-      "new " ^ "List<" ^ string_of_typ t ^ ">" ^ "(" ^ String.concat ", " (List.map string_of_expr e1) ^ ")"
+  | List (t, e1) ->
+      "new " ^ "List" ^ "<" ^ string_of_typ t ^ ">" ^ "(" ^ String.concat ", " (List.map string_of_expr e1) ^ ")"
+  | Queue(t, e1) -> "new " ^ "Queue" ^ "<" ^ string_of_typ t ^ ">" ^ "(" ^ String.concat ", " (List.map string_of_expr e1) ^ ")"
+  | PQueue(t, e1) -> "new" ^ "Pqueue" ^ "<" ^ string_of_typ t ^ ">" ^ "(" ^ String.concat ", " (List.map string_of_expr e1) ^ ")"
+  | Graph(t) -> "new Graph" ^ "<" ^ string_of_typ t ^ ">"
+  | Node(n, t) -> "new Node" ^ "<" ^ string_of_typ t ^ ">" ^ "(" ^ n ^ ")"
+  | AccessStructField(v, e) -> string_of_expr v ^ "~" ^ e
+  | ObjectCall(o, f, e1) -> string_of_expr o ^ "." ^ f ^ "(" ^ String.concat ", " (List.map string_of_expr e1) ^ ")"
+
 
 let rec string_of_stmt = function
     Block(stmts) ->
@@ -123,7 +136,7 @@ let string_of_fdecl fdecl =
   String.concat "" (List.map string_of_stmt fdecl.body) ^
   "}\n"
 
-let string_of_structdecl structdecl = 
+let string_of_structdecl structdecl =
   "struct " ^ structdecl.sname ^ " \n{\n" ^
   String.concat "; " (List.map snd structdecl.sformals) ^
   "}\n"
@@ -131,4 +144,4 @@ let string_of_structdecl structdecl =
 let string_of_program (vars, funcs, structs) =
   String.concat "" (List.map string_of_vdecl vars) ^ "\n" ^
   String.concat "\n" (List.map string_of_structdecl structs) ^ "\n" ^
-  String.concat "\n" (List.map string_of_fdecl funcs) 
+  String.concat "\n" (List.map string_of_fdecl funcs)

@@ -26,12 +26,12 @@ rule token = parse
 | "."		{ DOT }
 
 | "int"    { INT }			| "bool"   { BOOL }			| "string"	{ STRING }
-| "void"   { VOID }			| "float"  { FLOAT }		
+| "void"   { VOID }			| "float"  { FLOAT }
 
 | "struct"	{ STRUCT }		| "List"	{ LIST }		| "Queue"	{ QUEUE }
 | "Node" 	{ NODE }		| "Graph"	{ GRAPH }		| "Pqueue"	{ PQUEUE }
 
-
+| '~' { TILDE }
 
 | "true"   { TRUE }			| "false"  { FALSE }
 

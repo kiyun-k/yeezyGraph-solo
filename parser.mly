@@ -20,7 +20,7 @@ let get3of3 (_, _, a) = a
 %token INT BOOL STRING FLOAT
 
 /* Struct tokens */
-%token STRUCT
+%token STRUCT TILDE
 
 /* Collections tokens */
 %token LIST QUEUE PQUEUE
@@ -29,7 +29,7 @@ let get3of3 (_, _, a) = a
 %token GRAPH NODE
 
 /* Control flow tokens */
-%token IF ELSE FOR WHILE 
+%token IF ELSE FOR WHILE
 
 /* Function tokens */
 %token RETURN VOID NEW DOT
@@ -53,7 +53,7 @@ let get3of3 (_, _, a) = a
 %left LT GT LEQ GEQ
 %left PLUS MINUS
 %left TIMES DIVIDE
-%left DOT
+%left DOT TILDE
 
 
 %start program
@@ -88,16 +88,16 @@ formal_list:
 
 typ:
     INT { Int }
-  | BOOL { Bool } 
+  | BOOL { Bool }
   | STRING { String }
   | VOID { Void }
-  | STRUCT ID { StructType ($2) } 
+  | STRUCT ID { StructType ($2) }
   | GRAPH LT typ GT { GraphType($3)}
   | NODE LT typ GT { NodeType($3) }
   | QUEUE LT typ GT {QueueType($3)}
   | PQUEUE LT typ GT { PQueueType($3) }
   | LIST LT typ GT { ListType($3) }
- 
+
 
 vdecl_list:
     /* nothing */    { [] }
@@ -107,7 +107,7 @@ vdecl:
    typ ID SEMI { ($1, $2) }
 
 structdecl:
-  STRUCT ID LBRACE vdecl_list RBRACE 
+  STRUCT ID LBRACE vdecl_list RBRACE
     { {
         sname = $2;
         sformals = $4;
@@ -152,7 +152,7 @@ expr:
   | expr OR     expr { Binop($1, Or,    $3) }
   | MINUS expr %prec NEG { Unop(Neg, $2) }
   | NOT expr         { Unop(Not, $2) }
-  | ID ASSIGN expr   { Assign($1, $3) }
+  | expr ASSIGN expr   { Assign($1, $3) }
   | ID LPAREN actuals_opt RPAREN { Call($1, $3) }
   | LPAREN expr RPAREN { $2 }
   | NEW QUEUE LT typ GT LPAREN actuals_opt RPAREN { Queue($4, $7) }
@@ -160,6 +160,7 @@ expr:
   | NEW LIST LT typ GT LPAREN actuals_opt RPAREN { List($4,$7) }
   | NEW GRAPH LT typ GT LPAREN RPAREN { Graph($4) }
   | NEW NODE LT typ GT LPAREN ID RPAREN {Node($7, $4)}
+  | expr TILDE  ID        { AccessStructField($1, $3) }
 
 
 actuals_opt:
