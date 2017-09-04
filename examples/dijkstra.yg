@@ -18,7 +18,7 @@ Graph<Node<int>> doDijkstra(Graph<Node<int>> g, Node<int> start){
         Node<int> u = pq.pq_pop();
         u.setVisited(true);
 
-        connected.l_add(u);
+        shortestPaths.addNode(u);
         List<Node<int>> outNodes = u.getOutNodes();
         int numOutNodes = outNodes.l_size();
 
@@ -41,12 +41,12 @@ Graph<Node<int>> doDijkstra(Graph<Node<int>> g, Node<int> start){
     return shortestPaths;
 }
 
-Graph<Node<int>> getWeightedShortestPath(Graph<Node<int>> original, Node<int> start, Node<int> end){
+void getWeightedShortestPath(Graph<Node<int>> original, Node<int> start, Node<int> end){
     Graph<Node<int>> lowestCosts = doDijkstra(original);
     Graph<Node<int>> shortestPath = new Graph<Node<int>>();
 
     List nodes = new List<Node<int>>();
-    nodes = g~nodes; 
+    nodes = lowestCosts~nodes; 
     for(int i = 0; i < nodes.l_size(); i++){
         Node<int> temp = new Node<int>(nodes.l_get(i)~name);
         shortestPath.addNode(temp);
@@ -60,7 +60,7 @@ Graph<Node<int>> getWeightedShortestPath(Graph<Node<int>> original, Node<int> st
         end = prev;
     }
 
-    return shortestPath
+    shortestPath.printGraph();
 }
 
 int main(){
@@ -105,8 +105,7 @@ int main(){
 
     g.addedge(n7, n8, 10);
 
-    Graph shortest = getWeightedShortestPath(g, n2, n7);
-    shortest.printGraph();
+    getWeightedShortestPath(g, n2, n7);
     
     return 0;
 }
