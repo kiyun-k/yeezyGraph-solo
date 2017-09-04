@@ -35,6 +35,8 @@ rule token = parse
 
 | "true"   { TRUE }			| "false"  { FALSE }
 
+| "INFINITY" { INFINITY }   | "NEGINFINITY" { NEGINFINITY }
+
 | ['0'-'9']+ as lxm { INT_LITERAL(int_of_string lxm) }
 | '"'([^'"']* as lxm)'"' {STR_LITERAL(lxm)}
 | ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']* as lxm { ID(lxm) }

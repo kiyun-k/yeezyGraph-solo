@@ -17,7 +17,7 @@ let get3of3 (_, _, a) = a
 %token EQ NEQ LT LEQ GT GEQ TRUE FALSE AND OR
 
 /* Primitive datatype tokens */
-%token INT BOOL STRING FLOAT
+%token INT BOOL STRING FLOAT INFINITY NEGINFINITY
 
 /* Struct tokens */
 %token STRUCT TILDE
@@ -161,6 +161,8 @@ expr:
   | NEW GRAPH LT typ GT LPAREN RPAREN { Graph($4) }
   | NEW NODE LT typ GT LPAREN ID RPAREN {Node($7, $4)}
   | expr TILDE  ID        { AccessStructField($1, $3) }
+  | INFINITY { Infinity }
+  | NEGINFINITY { Neginfinity }
 
 
 actuals_opt:

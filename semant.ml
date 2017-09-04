@@ -182,6 +182,8 @@ let check (globals, functions, structs) =
     (* Return the type of an expression or throw an exception *)
     let rec expr = function
 	      IntLit _ -> Int
+      | Infinity -> Int
+      | Neginfinity -> Int
       | FloatLit _ -> Float
       | BoolLit _ -> Bool
       | StringLit _ -> String

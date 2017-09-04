@@ -30,6 +30,8 @@ type expr =
   | Noexpr
   | AccessStructField of expr * string
   | ObjectCall of expr * string * expr list
+  | Infinity
+  | Neginfinity
 
 type stmt =
     Block of stmt list
@@ -110,7 +112,8 @@ let rec string_of_expr = function
   | Node(n, t) -> "new Node" ^ "<" ^ string_of_typ t ^ ">" ^ "(" ^ n ^ ")"
   | AccessStructField(v, e) -> string_of_expr v ^ "~" ^ e
   | ObjectCall(o, f, e1) -> string_of_expr o ^ "." ^ f ^ "(" ^ String.concat ", " (List.map string_of_expr e1) ^ ")"
-
+  | Infinity -> "INFINITY"
+  | Neginfinity -> "NEGINFINITY"
 
 let rec string_of_stmt = function
     Block(stmts) ->

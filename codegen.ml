@@ -279,7 +279,8 @@ let translate (globals, functions, structs) =
       | A.StringLit s -> L.build_global_stringptr s "str" builder
       | A.Noexpr -> L.const_int i32_t 0
       | A.Id s -> L.build_load (lookup s) s builder
-      
+      | A.Infinity -> L.const_int i32_t (1000000)
+      | A.Neginfinity -> L.const_int i32_t (-1000000)
       | A.Binop (e1, op, e2) ->
 	       let e1' = expr builder e1
          and e2' = expr builder e2

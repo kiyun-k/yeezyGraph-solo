@@ -1,0 +1,113 @@
+Graph<Node<int>> doDijkstra(Graph<Node<int>> g, Node<int> start){
+    Pqueue pq = new Pqueue();
+    Graph<Node<int>> shortestPaths = new Graph<Node<int>>();
+
+    List nodes = new List<Node<int>>();
+    nodes = g~nodes; 
+    for(int i = 0; i < nodes.l_size(); i++){
+        Node<int> cur = nodes.l_get(i);
+        cur.setVisited(false);
+        cur.setNodeData(INFINITY);
+    }
+
+    start.setNodeData(0);
+    start.setVisited(true);
+
+    pq.pq_push(start);
+    while(!pq.isEmpty()){
+        Node<int> u = pq.pq_pop();
+        u.setVisited(true);
+
+        connected.l_add(u);
+        List<Node<int>> outNodes = u.getOutNodes();
+        int numOutNodes = outNodes.l_size();
+
+        for(int i = 0; i < numOutNodes; i = i + 1) {
+            Node<int> adj = outNodes.l_get(i);
+
+            if(!adj.isVisited || !shortestPaths.contains(adj~name)){
+                int edgeWeight = g.getWeight(u, adj); 
+                if(u~data + edgeWeight < adj~data){
+                    Node<int> temp = new Node<int>();
+                    temp.setNodeData(u~data + edgeWeight);
+                    shortestPaths.addNode(temp);
+                    shortestPaths.addEdge(temp, u, temp~data);
+                }
+                pq.pq_push(adj);
+            }
+        }
+
+    }
+    return shortestPaths;
+}
+
+Graph<Node<int>> getWeightedShortestPath(Graph<Node<int>> original, Node<int> start, Node<int> end){
+    Graph<Node<int>> lowestCosts = doDijkstra(original);
+    Graph<Node<int>> shortestPath = new Graph<Node<int>>();
+
+    List nodes = new List<Node<int>>();
+    nodes = g~nodes; 
+    for(int i = 0; i < nodes.l_size(); i++){
+        Node<int> temp = new Node<int>(nodes.l_get(i)~name);
+        shortestPath.addNode(temp);
+    }
+
+    while(end~name != start~name){
+        Node<int> prev = (end~inNodes).l_get(0);
+        if(prev != null){
+            shortestPath.addEdge(prev, end, lowestCosts.getWeight(prev, end));
+        }
+        end = prev;
+    }
+
+    return shortestPath
+}
+
+int main(){
+    Graph<Node<int>> g = new Graph<Node<int>>();
+
+    Node<int> n1 = new Node<int>("n1");
+    Node<int> n2 = new Node<int>("n2");
+    Node<int> n3 = new Node<int>("n3");
+    Node<int> n4 = new Node<int>("n4");
+    Node<int> n5 = new Node<int>("n5");
+    Node<int> n6 = new Node<int>("n6");
+    Node<int> n7 = new Node<int>("n7");
+    Node<int> n8 = new Node<int>("n8");
+
+    g.addNode(n1);
+    g.addNode(n2);
+    g.addNode(n3);
+    g.addNode(n4);
+    g.addNode(n5);
+    g.addNode(n6);
+    g.addNode(n7);
+    g.addNode(n8);
+
+    g.addEdge(n1, n3, 7);
+    g.addEdge(n1, n7, 8);
+    g.addEdge(n1, n8, 13);
+
+    g.addEdge(n2, n3, 5);
+    g.addEdge(n2, n4, 6);
+    g.addEdge(n2, n5, 8);
+
+    g.addEdge(n3, n6, 11);
+    g.addEdge(n3, n8, 8);
+
+    g.addEdge(n4, n5, 2);
+    g.addEdge(n4, n6, 14);
+
+    g.addEdge(n5, n6, 3);
+    g.addEdge(n5, n8, 7);
+
+    g.addEdge(n6, n8, 4);
+
+    g.addedge(n7, n8, 10);
+
+    Graph shortest = getWeightedShortestPath(g, n2, n7);
+    shortest.printGraph();
+    
+    return 0;
+}
+
