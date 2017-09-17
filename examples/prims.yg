@@ -4,7 +4,7 @@ Graph<Node<int>> doPrim(Graph<Node<int>> g, Node<int> start){
 
 	List nodes = new List<Node<int>>();
     nodes = g~nodes; 
-    for(int i = 0; i < nodes.l_size(); i++){
+    for(int i = 0; i < nodes.l_size(); i = i + 1){
         Node<int> cur = nodes.l_get(i);
         cur.setVisited(false);
         cur.setNodeData(INFINITY);
@@ -48,7 +48,7 @@ void getMST(Graph<Node<int>> original, Node<int> start){
 
     List nodes = new List<Node<int>>();
     nodes = lowestCost~nodes; 
-    for(int i = 0; i < nodes.l_size(); i++){
+    for(int i = 0; i < nodes.l_size(); i = i + 1){
         Node<int> temp = new Node<int>(nodes.l_get(i)~name);
         mst.addNode(temp);
         if((temp~inNodes).l_size > 0){

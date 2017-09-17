@@ -31,7 +31,11 @@ rule token = parse
 | "struct"	{ STRUCT }		| "List"	{ LIST }		| "Queue"	{ QUEUE }
 | "Node" 	{ NODE }		| "Graph"	{ GRAPH }		| "Pqueue"	{ PQUEUE }
 
-| '~' { TILDE }
+| "++" { ADDNODE }			| "--"	{ REMOVENODE }		| "->" 		{ ADDEDGE }
+| "!->" { REMOVEEDGE }		| "_" { UNDERSCORE }
+
+| "@name"   { GETNAME }		| "@visited" { GETVISITED } | "@in" { GETINNODES }
+| "@out" { GETOUTNODES }    | "@data" { GETDATA }
 
 | "true"   { TRUE }			| "false"  { FALSE }
 

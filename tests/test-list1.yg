@@ -1,0 +1,5 @@
+int main() {
+  List<int> i;
+  i = new List<int>();
+  return 0;
+}

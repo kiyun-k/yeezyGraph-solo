@@ -20,13 +20,19 @@ let get3of3 (_, _, a) = a
 %token INT BOOL STRING FLOAT INFINITY NEGINFINITY
 
 /* Struct tokens */
-%token STRUCT TILDE
+%token STRUCT 
 
 /* Collections tokens */
 %token LIST QUEUE PQUEUE
 
 /* Graph tokens */
 %token GRAPH NODE
+
+/* Graph Op Tokens */
+%token ADDNODE REMOVENODE ADDEDGE REMOVEEDGE UNDERSCORE
+
+/* Node Op Tokens */
+%token GETNAME GETVISITED GETINNODES GETOUTNODES GETDATA
 
 /* Control flow tokens */
 %token IF ELSE FOR WHILE
@@ -35,7 +41,9 @@ let get3of3 (_, _, a) = a
 %token RETURN VOID NEW DOT
 
 %token <int> INT_LITERAL
+%token <float> FLOAT_LITERAL
 %token <string> STR_LITERAL
+
 /* Variable names */
 %token <string> ID
 %token EOF
@@ -43,6 +51,7 @@ let get3of3 (_, _, a) = a
 %nonassoc NOELSE
 %nonassoc ELSE
 %nonassoc LBRACKET RBRACKET
+%nonassoc ADDNODE REMOVENODE ADDEDGE REMOVEEDGE GGETNAME GETVISITED GEINNODES GETOUTNODES GETDATA UNDERSCORE
 
 %right ASSIGN
 %right NOT NEG
@@ -160,9 +169,20 @@ expr:
   | NEW LIST LT typ GT LPAREN actuals_opt RPAREN { List($4,$7) }
   | NEW GRAPH LT typ GT LPAREN RPAREN { Graph($4) }
   | NEW NODE LT typ GT LPAREN ID RPAREN {Node($7, $4)}
-  | expr TILDE  ID        { AccessStructField($1, $3) }
+  | expr DOT  ID        { AccessStructField($1, $3) }
+  | expr DOT ID LPAREN actuals_opt RPAREN { ObjectCall($1, $3, $5) } 
   | INFINITY { Infinity }
-  | NEGINFINITY { Neginfinity }
+  | NEGINFINITY { Neginfinity } 
+  | ID UNDERSCORE ID {Gop($1, AccessNode, $3)}
+  | ID LBRACKET INT_LITERAL RBRACKET ADDEDGE LPAREN ID COMMA ID RPAREN { GopAddEdge($1, $3, AddEdge, $7, $9)}
+  | ID REMOVEEDGE LPAREN ID COMMA ID RPAREN { GopRemoveEdge($1, RemoveEdge, $4, $6)}
+  | ID ADDNODE ID { Gop($1, AddNode, $3) }
+  | ID REMOVENODE ID { Gop($1, RemoveNode, $3) }
+  | expr GETNAME  { Nop($1, GetName) }
+  | expr GETVISITED  { Nop($1, GetVisited) }
+  | expr GETINNODES  { Nop($1, GetInNodes) }
+  | expr GETOUTNODES  { Nop($1, GetOutNodes) }
+  | expr GETDATA  { Nop($1, GetData) }
 
 
 actuals_opt:
