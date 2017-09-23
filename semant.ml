@@ -274,8 +274,49 @@ let check (globals, functions, structs) =
               " expected " ^ string_of_typ actltype ^ " in " ^ string_of_expr e)))
             else ignore (check_assign ft et (Failure ("illegal actual argument found " ^ string_of_typ et ^
               " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e)))) fd.formals act;
-         !returntype
-
+          !returntype
+        | Nop(n, op) -> let t = expr n in 
+          (match t with 
+            NodeType typ ->
+              (match op with
+                GetName -> String
+                | GetData -> typ
+                | GetVisited -> Bool
+                | GetInNodes -> ListType(String)
+                | GetOutNodes -> ListType(String)
+              )
+              | _ -> raise(Failure("Not a valid node operator"))
+          )
+        | Gop(g, op, n) -> let gt = type_of_identifier g and nt = type_of_identifier n in 
+          ( match gt with 
+            GraphType typ ->
+              ( match op with 
+                AccessNode when nt = String -> NodeType(typ)
+                | AddNode when nt = String -> GraphType(typ)
+                | RemoveNode when nt = String -> GraphType(typ)
+                | _ -> raise(Failure("Not a valid graph operator"))
+              )
+            | _ -> raise(Failure("This is not a graph"))
+          )
+          
+        | GopAddEdge(g, _, op, n1, n2) -> let gt = expr g and nt1 = type_of_identifier n1 and nt2 = type_of_identifier n2 in
+          (match gt with 
+            GraphType(typ) -> 
+            (match op with 
+              AddEdge when nt1 = NodeType(typ) && nt2 = NodeType(typ) -> GraphType(typ)
+              | _ -> raise(Failure("Not a valid graph operator"))
+            )
+            | _ -> raise(Failure("This is not a graph"))
+          )
+        | GopRemoveEdge(g, op, n1, n2) -> let gt = expr g and nt1 = type_of_identifier n1 and nt2 = type_of_identifier n2 in
+          (match gt with 
+            GraphType(typ) -> 
+            (match op with 
+              RemoveEdge when nt1 = NodeType(typ) && nt2 = NodeType(typ) -> GraphType(typ)
+              | _ -> raise(Failure("Not a valid graph operator"))
+            )
+            | _ -> raise(Failure("This is not a graph"))
+          )
     in
 
     let check_bool_expr e = if expr e != Bool

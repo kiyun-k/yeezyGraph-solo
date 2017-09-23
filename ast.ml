@@ -6,16 +6,17 @@ type op = Add | Sub | Mult | Div |
 
 type uop = Neg | Not
 
-type typ = Int | Bool | Float | String | Void | StructType of string
-| GraphType of typ | NodeType of typ | QueueType of typ |PQueueType of typ
-| ListType of typ | AnyType
-
 type nodeop = GetName | GetVisited | GetInNodes | GetOutNodes | GetData
 
 type graphop = AccessNode | AddNode | RemoveNode 
 
 type addedge = AddEdge 
 type removeedge = RemoveEdge
+
+type typ = Int | Bool | Float | String | Void | StructType of string
+| GraphType of typ | NodeType of typ | QueueType of typ |PQueueType of typ
+| ListType of typ | AnyType
+
 
 type bind = typ * string
 
@@ -28,7 +29,7 @@ type expr =
   | Binop of expr * op * expr
   | Unop of uop * expr
   | Nop of expr * nodeop
-  | Gop of expr * graphop * expr
+  | Gop of string * graphop * string
   | GopAddEdge of expr * int * addedge * string * string
   | GopRemoveEdge of expr * removeedge * string * string
   | Assign of expr * expr
@@ -143,7 +144,7 @@ let rec string_of_expr = function
   | ObjectCall(o, f, e1) -> string_of_expr o ^ "." ^ f ^ "(" ^ String.concat ", " (List.map string_of_expr e1) ^ ")"
   | Infinity -> "INFINITY"
   | Neginfinity -> "NEGINFINITY"
-  | Gop (e1, o, e2) -> string_of_expr e1 ^ string_of_gop o ^ string_of_expr e2
+  | Gop (e1, o, e2) -> e1 ^ string_of_gop o ^ e2
   | GopAddEdge(e1, i, o, e2, e3) -> string_of_expr e1 ^ string_of_int i ^ string_of_gop2 o ^  "(" ^ e2 ^ ", " ^ e3 ^ ")"
   | GopRemoveEdge (e1, o, e2, e3) ->  string_of_expr e1 ^ string_of_gop3 o ^ "(" ^ e2 ^ ", " ^ e3 ^ ")"
   | Nop (e1, o) -> string_of_expr e1 ^ string_of_nop o

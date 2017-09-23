@@ -464,6 +464,18 @@ let translate (globals, functions, structs) =
         let visited = expr builder e in 
         ignore(L.build_call setVisited_f [|node_ptr; visited|] "" builder); 
         node_ptr
+      | A.Nop(n, op) -> let node_ptr = expr builder n in 
+        (match op with
+          A.GetName -> let n_name = L.build_call getNodeName_f [|node_ptr|] "getNodeName" builder in n_name
+          | A.GetVisited -> let bool_ptr = L.build_call isVisited_f [|node_ptr|] "isVisited" builder in bool_ptr
+          | A.GetData ->  let n_type = get_type (lookup_types(get_id_name n)) in 
+              let val_ptr = L.build_call getNodeData_f [|node_ptr|] "getNodeData" builder in 
+              let data_type = ltype_of_typ n_type in
+              let data_ptr = L.build_bitcast val_ptr (L.pointer_type data_type) "data_ptr" builder in
+              (L.build_load data_ptr "data_ptr" builder)
+          | A.GetInNodes -> let val_ptr = L.build_call getInNodes_f [|node_ptr|] "getInNodes" builder in val_ptr
+          | A.GetOutNodes -> let val_ptr = L.build_call getOutNodes_f [|node_ptr|] "getOutNodes" builder in val_ptr
+        )
 
       | A.Queue(t, act) -> 
         let d_ltyp = ltype_of_typ t in
@@ -543,7 +555,7 @@ let translate (globals, functions, structs) =
           let g_ptr = L.build_call addEdge_f [| g_val; n1_val_pointer; n2_val_pointer; e_val|] "" builder in 
           g_ptr
       | A.ObjectCall(g, "removeEdge", [n1; n2]) ->   
-           let g_val = lookup (get_id_name g) in
+          let g_val = lookup (get_id_name g) in
           let g_val_pointer = L.build_load g_val "g_val_pointer" builder in  
           let n1_val = lookup (get_id_name n1) in 
           let n1_val_pointer = L.build_load n1_val "e1_val_pointer" builder in 
@@ -577,6 +589,51 @@ let translate (globals, functions, structs) =
         let bool_ptr = L.build_call contains_f [| g_ptr; e_val |] "contains" builder in bool_ptr  
       | A.ObjectCall(g, "printGraph", []) -> let g_ptr = expr builder g in 
         ignore(L.build_call printGraph_f [| g_ptr |] "" builder); g_ptr
+      | A.Gop(g, op, n) -> let g_val = lookup g in 
+        (match op with 
+          A.AccessNode -> let name_val = lookup n in
+            let node_ptr = L.build_call getNodeByName_f [|g_val; name_val|] "" builder in node_ptr 
+          | A.AddNode -> let g_val = lookup g in 
+            let e_val = lookup n in  
+            let e_val_pointer = L.build_load e_val "e_val_pointer" builder in 
+            let n_val = L.build_call initNode_f [| e_val_pointer |] "init" builder in 
+            let n_val_ptr = L.build_alloca (L.type_of n_val) "node_alloca" builder in 
+            ignore (L.build_store n_val n_val_ptr builder); 
+            let g_ptr = L.build_load g_val "graph_pointer" builder in 
+            let n_ptr = L.build_load n_val_ptr "node_pointer" builder in 
+            ignore(L.build_call addNode_f [|g_ptr; n_ptr|] "" builder); g_ptr
+          | A.RemoveNode -> 
+            let name_val = lookup n in 
+            let name_ptr = L.build_load name_val "" builder in 
+            let g_ptr = L.build_load g_val "graph_pointer" builder in 
+            let n_ptr = L.build_call initNode_f [|name_ptr|] "initNode" builder in 
+            ignore(L.build_store n_ptr name_ptr builder);
+            let node_ptr = L.build_load n_ptr "" builder in 
+            ignore(L.build_call removeNode_f [|g_ptr; node_ptr|] "" builder); g_ptr 
+        )
+      | A.GopAddEdge(g, i, op, n1, n2) -> 
+          (match op with 
+            A.AddEdge -> 
+              let g_val = expr builder g in 
+              let e_val = L.const_int i32_t i in 
+              let n1_val = lookup n1 in 
+              let n1_val_pointer = L.build_load n1_val "n1_val_pointer" builder in 
+              let n2_val = lookup n2 in 
+              let n2_val_pointer = L.build_load n2_val "n2_val_pointer" builder in 
+              let g_ptr = L.build_call addEdge_f [| g_val; n1_val_pointer; n2_val_pointer; e_val|] "" builder in 
+              g_ptr
+        )
+      | A.GopRemoveEdge(g, op, n1, n2) -> 
+        (match op with 
+            A.RemoveEdge -> let g_val = lookup (get_id_name g) in
+              let g_val_pointer = L.build_load g_val "g_val_pointer" builder in  
+              let n1_val = lookup n1 in 
+              let n1_val_pointer = L.build_load n1_val "e1_val_pointer" builder in 
+              let n2_val = lookup n2 in 
+              let n2_val_pointer = L.build_load n2_val "e2_val_pointer" builder in 
+              let g_ptr = L.build_call removeEdge_f [| g_val_pointer; n1_val_pointer; n2_val_pointer|] "" builder in 
+              g_ptr
+        )
 
       |  A.ObjectCall(_, f, act) -> 
          let (fdef, fdecl) = StringMap.find f function_decls in
@@ -585,9 +642,6 @@ let translate (globals, functions, structs) =
          let result = (match fdecl.A.typ with A.Void -> ""
                                               | _ -> f ^ "_result") in
          L.build_call fdef (Array.of_list actuals) result builder 
-
-
-
 
     in
 

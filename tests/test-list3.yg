@@ -1,0 +1,17 @@
+int main() {
+  List<int> i;
+  i = new List<int>();
+  i.l_add(3);
+  i.printList();
+  i.l_remove(0);
+  i.printList();
+  i.l_add(3);
+  i.l_insert(0, 6);
+  i.printList();
+  print(i.isEmpty());
+  print(i.size());
+  i.removeAll();
+  print(i.isEmpty());
+  print(i.size());
+  return 0;
+}

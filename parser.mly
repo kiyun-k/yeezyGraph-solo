@@ -50,8 +50,8 @@ let get3of3 (_, _, a) = a
 
 %nonassoc NOELSE
 %nonassoc ELSE
-%nonassoc LBRACKET RBRACKET
-%nonassoc ADDNODE REMOVENODE ADDEDGE REMOVEEDGE GGETNAME GETVISITED GEINNODES GETOUTNODES GETDATA UNDERSCORE
+%nonassoc LBRACKET RBRACKET 
+%nonassoc ADDNODE REMOVENODE ADDEDGE REMOVEEDGE UNDERSCORE
 
 %right ASSIGN
 %right NOT NEG
@@ -63,6 +63,7 @@ let get3of3 (_, _, a) = a
 %left PLUS MINUS
 %left TIMES DIVIDE
 %left DOT TILDE
+%left GETNAME GETVISITED GEINNODES GETOUTNODES GETDATA
 
 
 %start program
@@ -174,8 +175,8 @@ expr:
   | INFINITY { Infinity }
   | NEGINFINITY { Neginfinity } 
   | ID UNDERSCORE ID {Gop($1, AccessNode, $3)}
-  | ID LBRACKET INT_LITERAL RBRACKET ADDEDGE LPAREN ID COMMA ID RPAREN { GopAddEdge($1, $3, AddEdge, $7, $9)}
-  | ID REMOVEEDGE LPAREN ID COMMA ID RPAREN { GopRemoveEdge($1, RemoveEdge, $4, $6)}
+  | expr LBRACKET INT_LITERAL RBRACKET ADDEDGE LPAREN ID COMMA ID RPAREN { GopAddEdge($1, $3, AddEdge, $7, $9)}
+  | expr REMOVEEDGE LPAREN ID COMMA ID RPAREN { GopRemoveEdge($1, RemoveEdge, $4, $6)}
   | ID ADDNODE ID { Gop($1, AddNode, $3) }
   | ID REMOVENODE ID { Gop($1, RemoveNode, $3) }
   | expr GETNAME  { Nop($1, GetName) }

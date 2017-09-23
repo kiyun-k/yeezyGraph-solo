@@ -1,0 +1,6 @@
+int main() {
+  List<int> i;
+  i = new List<int>(1, 2, 3);
+  i.printList();
+  return 0;
+}
