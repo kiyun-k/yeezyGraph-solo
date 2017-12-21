@@ -1,0 +1,13 @@
+struct N {
+	int i;
+	string j;
+}
+
+int main(){
+	struct N n;
+	n~i = 15;
+	n~j = "foo";
+	print(n~i);
+	prints(n~j);
+	return 0;
+}

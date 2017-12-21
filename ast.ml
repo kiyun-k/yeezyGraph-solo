@@ -14,7 +14,7 @@ type addedge = AddEdge
 type removeedge = RemoveEdge
 
 type typ = Int | Bool | Float | String | Void | StructType of string
-| GraphType of typ | NodeType of typ | QueueType of typ |PQueueType of typ
+| GraphType of typ | NodeType of typ | QueueType of typ |PQueueType
 | ListType of typ | AnyType
 
 
@@ -36,7 +36,7 @@ type expr =
   | Call of string * expr list
   | List of typ * expr list
   | Queue of typ * expr list
-  | PQueue of typ * expr list
+  | PQueue of expr list
   | Graph of typ
   | Node of string * typ
   | Noexpr
@@ -79,7 +79,7 @@ let rec string_of_typ = function
   | StructType(s) -> s
   | ListType(t) -> "List " ^ string_of_typ t
   | QueueType(t) -> "Queue " ^ string_of_typ t
-  | PQueueType(t) -> "Pqueue " ^ string_of_typ t
+  | PQueueType(t) -> "Pqueue "
   | NodeType(t) -> "Node " ^ string_of_typ t
   | GraphType(t) -> "Graph " ^ string_of_typ t
   | AnyType -> "AnyType"
@@ -137,10 +137,10 @@ let rec string_of_expr = function
   | List (t, e1) ->
       "new " ^ "List" ^ "<" ^ string_of_typ t ^ ">" ^ "(" ^ String.concat ", " (List.map string_of_expr e1) ^ ")"
   | Queue(t, e1) -> "new " ^ "Queue" ^ "<" ^ string_of_typ t ^ ">" ^ "(" ^ String.concat ", " (List.map string_of_expr e1) ^ ")"
-  | PQueue(t, e1) -> "new" ^ "Pqueue" ^ "<" ^ string_of_typ t ^ ">" ^ "(" ^ String.concat ", " (List.map string_of_expr e1) ^ ")"
+  | PQueue(t, e1) -> "new" ^ "Pqueue" ^ "(" ^ String.concat ", " (List.map string_of_expr e1) ^ ")"
   | Graph(t) -> "new Graph" ^ "<" ^ string_of_typ t ^ ">"
   | Node(n, t) -> "new Node" ^ "<" ^ string_of_typ t ^ ">" ^ "(" ^ n ^ ")"
-  | AccessStructField(v, e) -> string_of_expr v ^ "." ^ e
+  | AccessStructField(v, e) -> string_of_expr v ^ "~" ^ e
   | ObjectCall(o, f, e1) -> string_of_expr o ^ "." ^ f ^ "(" ^ String.concat ", " (List.map string_of_expr e1) ^ ")"
   | Infinity -> "INFINITY"
   | Neginfinity -> "NEGINFINITY"

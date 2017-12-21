@@ -1,0 +1,9 @@
+struct N {
+	int i;
+	string j;
+}
+
+int main(){
+	struct N n;
+	return 0;
+}

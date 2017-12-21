@@ -20,7 +20,7 @@ let get3of3 (_, _, a) = a
 %token INT BOOL STRING FLOAT INFINITY NEGINFINITY
 
 /* Struct tokens */
-%token STRUCT 
+%token STRUCT TILDE
 
 /* Collections tokens */
 %token LIST QUEUE PQUEUE
@@ -105,7 +105,7 @@ typ:
   | GRAPH LT typ GT { GraphType($3)}
   | NODE LT typ GT { NodeType($3) }
   | QUEUE LT typ GT {QueueType($3)}
-  | PQUEUE LT typ GT { PQueueType($3) }
+  | PQUEUE { PQueueType }
   | LIST LT typ GT { ListType($3) }
 
 
@@ -166,11 +166,11 @@ expr:
   | ID LPAREN actuals_opt RPAREN { Call($1, $3) }
   | LPAREN expr RPAREN { $2 }
   | NEW QUEUE LT typ GT LPAREN actuals_opt RPAREN { Queue($4, $7) }
-  | NEW PQUEUE LT typ GT LPAREN actuals_opt RPAREN { PQueue($4, $7) }
+  | NEW PQUEUE LPAREN actuals_opt RPAREN { PQueue($4) }
   | NEW LIST LT typ GT LPAREN actuals_opt RPAREN { List($4,$7) }
   | NEW GRAPH LT typ GT LPAREN RPAREN { Graph($4) }
   | NEW NODE LT typ GT LPAREN ID RPAREN {Node($7, $4)}
-  | expr DOT  ID        { AccessStructField($1, $3) }
+  | expr TILDE ID        { AccessStructField($1, $3) }
   | expr DOT ID LPAREN actuals_opt RPAREN { ObjectCall($1, $3, $5) } 
   | INFINITY { Infinity }
   | NEGINFINITY { Neginfinity } 

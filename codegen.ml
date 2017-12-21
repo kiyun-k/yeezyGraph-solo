@@ -19,6 +19,7 @@ module StringMap = Map.Make(String)
 
 let translate (globals, functions, structs) =
   let context = L.global_context () in
+  let the_module = L.create_module context "YeezyGraph" in
   let listctx = L.global_context () in
   let nodectx = L.global_context () in
   let graphctx = L.global_context () in
@@ -36,13 +37,12 @@ let translate (globals, functions, structs) =
   let pqueuemb = L.MemoryBuffer.of_file"pqueue.bc" in
   let pqueuem = Llvm_bitreader.parse_bitcode pqueuectx pqueuemb in
 
-  let the_module = L.create_module context "YeezyGraph"
-  and i32_t  = L.i32_type  context
+  let i32_t  = L.i32_type  context
   and i8_t   = L.i8_type   context
   and i1_t   = L.i1_type   context
   and float_t = L.double_type context
   and list_t = L.pointer_type (match L.type_by_name llm "struct.List" with
-    None -> raise (Invalid_argument "Option.get struct.List")
+    None -> raise (Invalid_argument "Option.get list")
    | Some x -> x)
   and queue_t = L.pointer_type (match L.type_by_name queuem "struct.Queue" with
     None -> raise (Invalid_argument "Option.get queue") | Some x -> x)
@@ -362,9 +362,10 @@ let translate (globals, functions, structs) =
                                                  | _ -> f ^ "_result") in
             L.build_call fdef (Array.of_list actuals) result builder
       
-      | A.List(t, act) -> let d_ltyp = ltype_of_typ t in
+      | A.List(t, act) -> 
+        let d_ltyp = ltype_of_typ t in
         let listptr = L.build_call initList_f [||] "init" builder in
-          let add_elmt elmt =
+          let add_elmt elmt = 
             let d_ptr = match t with
             A.ListType _ -> expr builder elmt
           | _ ->
@@ -372,10 +373,11 @@ let translate (globals, functions, structs) =
             let d_ptr = L.build_malloc d_ltyp "tmp" builder in
             ignore (L.build_store d_val d_ptr builder);
             d_ptr in
+
             let void_d_ptr = L.build_bitcast d_ptr (L.pointer_type i8_t) "ptr" builder in
             ignore (L.build_call lAdd_f [| listptr; void_d_ptr |] "" builder) in
           ignore (List.map add_elmt act);
-        listptr
+          listptr
       | A.ObjectCall(l, "l_add", [e]) -> let list_ptr = expr builder l in
         let e_val = expr builder e in
         let list_name = get_id_name l in

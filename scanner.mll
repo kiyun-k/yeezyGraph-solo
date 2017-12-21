@@ -32,7 +32,7 @@ rule token = parse
 | "Node" 	{ NODE }		| "Graph"	{ GRAPH }		| "Pqueue"	{ PQUEUE }
 
 | "++" { ADDNODE }			| "--"	{ REMOVENODE }		| "->" 		{ ADDEDGE }
-| "!->" { REMOVEEDGE }		| "_" { UNDERSCORE }
+| "!->" { REMOVEEDGE }		| "_" { UNDERSCORE }		| "~" 		{ TILDE }
 
 | "@name"   { GETNAME }		| "@visited" { GETVISITED } | "@in" { GETINNODES }
 | "@out" { GETOUTNODES }    | "@data" { GETDATA }

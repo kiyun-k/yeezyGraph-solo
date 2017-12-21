@@ -1,9 +1,9 @@
 Graph<int> doDijkstra(Graph<int> g, Node<int> start){
     Pqueue pq = new Pqueue();
-    Graph<int> shortestPaths = new Graph<Nint>();
+    Graph<int> shortestPaths = new Graph<int>();
 
-    List nodes = new List<Node<int>>();
-    nodes = g~nodes;
+    List<Node<int>> nodes = new List<Node<int>>();
+    nodes = start@out;
     for(int i = 0; i < nodes.l_size(); i = i + 1){
         Node<int> cur = nodes.l_get(i);
         cur.setVisited(false);

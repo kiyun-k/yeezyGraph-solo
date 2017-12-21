@@ -1,0 +1,25 @@
+Struct N {
+	int a;
+}
+int main(){
+	Queue<struct N> q = new Queue<struct N>();
+
+	struct N n1;
+	n1~a = 5;
+
+	struct N n2;
+	n2~a = 3;
+
+	q.enqueue(n1);
+	q.enqueue(n2);
+
+	struct N front = q.front();
+	print(front~a);
+
+	print(q.q_size());
+
+	q.dequeue();
+	print(q.q_size());
+	front = q.front();
+	print(front~a);
+}

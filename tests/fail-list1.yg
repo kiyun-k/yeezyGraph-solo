@@ -1,0 +1,5 @@
+int main(){
+	List<int> i = new List<int>();
+	i.l_add("abc");
+	return 0;
+}

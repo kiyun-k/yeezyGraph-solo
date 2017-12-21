@@ -4,8 +4,10 @@
 
 # Easiest way to build: using ocamlbuild, which in turn uses ocamlfind
 
-.PHONY : yeezygraph.native
+.PHONY : all
+all: yeezygraph.native ./c-files/graph.o ./c-files/linkedlist.o ./c-files/map.o ./c-files/node.o ./c-files/pqueue.o ./c-files/queue.o
 
+.PHONY: yeezygraph.native
 yeezygraph.native :
 	ocamlbuild -r -use-ocamlfind -pkgs llvm,llvm.linker,llvm.analysis,llvm.bitreader,llvm.irreader -cflags -w,+a-4 \
 		yeezygraph.native
@@ -17,6 +19,7 @@ clean :
 	ocamlbuild -clean
 	rm -rf testall.log *.diff yeezygraph scanner.ml parser.ml parser.mli
 	rm -rf *.cmx *.cmi *.cmo *.cmx *.o
+	rm -rf ./c-files/*.o
 
 # More detailed: build using ocamlc/ocamlopt + ocamlfind to locate LLVM
 
@@ -54,6 +57,18 @@ scanner.cmx : parser.cmx
 semant.cmo : ast.cmo
 semant.cmx : ast.cmx
 parser.cmi : ast.cmo
+
+# C files
+linkedlist: ./c-files/linkedlist.c
+	cc -o linkedlist -DBUILD_TEST ./c-files/linkedlist.c
+node: ./c-files/node.c
+	cc -o node -DBUILD_TEST ./c-files/node.c
+graph: ./c-files/graph.c
+	cc -o graph -DBUILD_TEST ./c-files/graph.c
+queue: ./c-files/queue.c
+	cc -o linkedlist -DBUILD_TEST ./c-files/pqueue.c
+pqueue: ./c-files/pqueue.c
+	cc -o linkedlist -DBUILD_TEST ./c-files/pqueue.c
 
 # Building the tarball
 

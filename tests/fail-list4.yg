@@ -1,0 +1,11 @@
+struct foo = {
+	int i;
+}
+int main(){
+	struct foo f;
+	f.i = 15
+	List<foo> i = new List<foo>(f);
+	i.l_add(15);
+	
+	return 0;
+}
